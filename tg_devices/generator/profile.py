@@ -16,6 +16,7 @@ class OSProfile:
         app_version: The version string for the Telegram application.
         system_version: The version string for the underlying OS.
         device_model: The hardware model or identifier for the device.
+
     """
 
     os: str

@@ -11,9 +11,18 @@ class StandardRandomProvider(IRandomProvider):
 
     Args:
         seed: Optional seed for reproducible results.
+
     """
 
     def __init__(self, seed: str | int | None = None) -> None:
+        """Initialize the StandardRandomProvider with an optional seed.
+
+        Args:
+            seed: A string, integer, or None to seed the random generator.
+                If None, the generator is initialized with system time or
+                entropy source for non-deterministic behavior.
+
+        """
         self._random = random.Random(seed)
 
     def choice(
@@ -32,6 +41,7 @@ class StandardRandomProvider(IRandomProvider):
 
         Raises:
             ValueError: If *population* is empty.
+
         """
         chosen = self.choices(population=population, weights=weights, k=1)
         return chosen[0]
@@ -54,6 +64,7 @@ class StandardRandomProvider(IRandomProvider):
 
         Raises:
             ValueError: If *population* is empty.
+
         """
         if not population:
             raise ValueError("Population is empty")

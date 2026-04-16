@@ -31,6 +31,7 @@ def get_compatibility_map(
     Raises:
         ValueError: If a system version has no compatible app
             versions.
+
     """
     compat_map: dict[
         SystemVersion, tuple[tuple[AppVersion, ...], tuple[int, ...]]
@@ -38,7 +39,7 @@ def get_compatibility_map(
     for sys_ver in all_systems:
         compatible = [
             (app_ver, weight)
-            for app_ver, weight in zip(all_apps, all_app_weights)
+            for app_ver, weight in zip(all_apps, all_app_weights, strict=False)
             if is_compatible(os_name, sys_ver.value, app_ver.value)
         ]
 

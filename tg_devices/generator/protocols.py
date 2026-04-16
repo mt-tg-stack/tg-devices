@@ -18,5 +18,6 @@ class IDeviceProfileGenerator(Protocol):
 
         Returns:
             A frozen ``OSProfile`` with compatible version fields.
+
         """
         ...

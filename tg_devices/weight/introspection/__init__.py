@@ -8,7 +8,7 @@ a single entry point for the weight providers.
 from typing import Final
 
 from tg_devices.enums.os import OS
-from tg_devices.weight.introspection.android import (  # noqa: I001
+from tg_devices.weight.introspection.android import (
     ANDROID_APP_WEIGHTS as ANDROID_APP_WEIGHTS,
 )
 from tg_devices.weight.introspection.android import (

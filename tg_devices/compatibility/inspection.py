@@ -19,10 +19,11 @@ def parse_version(version_str: str) -> tuple[int, ...]:
     Returns:
         A tuple of integers (e.g., (6, 5, 1)). If no numeric sequence
         is found, (0,) is returned.
+
     """
-    match = re.search(r"(\d+(?:\.\d+)+)", version_str)
+    match = re.search(r"^v?(\d+(?:\.\d+)*)", version_str.strip())
     if not match:
-        return (0,)
+        raise ValueError(f"Invalid version string: {version_str}")
     return tuple(map(int, match.group(1).split(".")))
 
 
@@ -41,6 +42,7 @@ def is_compatible(os: OS, sys_ver: str, app_ver: str) -> bool:
     Returns:
         True if the combination is statistically and technically
         plausible; False otherwise.
+
     """
     app_v = parse_version(app_ver)
     sys_v = parse_version(sys_ver)

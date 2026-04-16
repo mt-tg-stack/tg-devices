@@ -18,6 +18,7 @@ class IWeightProvider(Protocol):
         Returns:
             A ``StaticOSWeights`` instance containing versions,
             models, weights, and the compatibility map.
+
         """
         ...
 
@@ -26,6 +27,7 @@ class IWeightProvider(Protocol):
 
         Returns:
             Tuple of ``OS`` enum members.
+
         """
         ...
 
@@ -34,5 +36,6 @@ class IWeightProvider(Protocol):
 
         Returns:
             Tuple of integer weights aligned with ``get_os_names()``.
+
         """
         ...

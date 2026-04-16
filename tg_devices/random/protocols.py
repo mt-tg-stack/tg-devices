@@ -26,6 +26,7 @@ class IRandomProvider(Protocol):
 
         Returns:
             The single element selected from the population.
+
         """
         ...
 
@@ -44,5 +45,6 @@ class IRandomProvider(Protocol):
 
         Returns:
             A list containing the selected elements.
+
         """
         ...

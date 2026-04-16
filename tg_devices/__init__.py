@@ -23,4 +23,4 @@ from tg_devices.enums.os import OS
 from tg_devices.generator.generator import DeviceProfileGenerator
 from tg_devices.generator.profile import OSProfile
 
-__all__ = ["DeviceProfileGenerator", "OS", "OSProfile"]
+__all__ = ["OS", "DeviceProfileGenerator", "OSProfile"]

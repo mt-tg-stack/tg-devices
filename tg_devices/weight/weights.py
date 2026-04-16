@@ -19,6 +19,7 @@ class Weights:
             available app version enums.
         system_weights: Relative weights (integers) aligned with the
             available system version enums.
+
     """
 
     app_weights: tuple[int, ...]
@@ -42,6 +43,7 @@ class StaticOSWeights:
         weights: Nested ``Weights`` for internal version selection.
         compatibility_map: Pre-computed mapping ensuring that the
             selected app version is valid for the chosen system version.
+
     """
 
     app_version: tuple[AppVersion, ...]

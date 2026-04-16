@@ -1,5 +1,6 @@
 """Static weight provider implementation."""
 
+import logging
 from typing import TypedDict, Unpack, cast
 
 from tg_devices.enums.os import OS
@@ -37,6 +38,8 @@ from tg_devices.weight.introspection import (
 from tg_devices.weight.protocols import IWeightProvider
 from tg_devices.weight.weights import StaticOSWeights
 
+logger = logging.getLogger(__name__)
+
 
 class WeightParams(TypedDict, total=False):
     """Per-OS weight overrides for ``StaticWeightProvider``.
@@ -50,6 +53,7 @@ class WeightParams(TypedDict, total=False):
         linux: Weight for Linux (default 5).
         macos: Weight for macOS (default 15).
         android: Weight for Android (default 50).
+
     """
 
     windows: int
@@ -73,6 +77,7 @@ class StaticWeightProvider(IWeightProvider):
     Raises:
         ValueError: If provided weights sum to >= 100 with missing
             keys, or if final weights do not sum to 100.
+
     """
 
     windows_apps = WIN_APPS
@@ -105,9 +110,89 @@ class StaticWeightProvider(IWeightProvider):
     linux_weights_dt = LINUX_WEIGHTS_DT
     android_weights_dt = ANDROID_WEIGHTS_DT
 
-    def __init__(self, **weight_params: Unpack[WeightParams]) -> None:
-        defaults = {"windows": 30, "macos": 15, "linux": 5, "android": 50}
+    @staticmethod
+    def _distribute_weights_lrm(
+        remaining: int,
+        missing_keys: list[str],
+        defaults: dict[str, int],
+    ) -> dict[str, int]:
+        """Distribute remaining weight using Largest Remainder Method.
 
+        This method ensures that:
+        1. All weights sum exactly to the remaining budget
+        2. Distribution is as close as possible to the default proportions
+        3. No rounding errors accumulate
+
+        Algorithm (Hare-Niemeyer / Largest Remainder):
+        1. Calculate base allocation: floor(remaining * proportion)
+        2. Calculate remainder for each key: fractional part
+        3. Distribute remaining quota to keys with largest remainders
+
+        Args:
+            remaining: Total weight budget to distribute.
+            missing_keys: List of keys that need weight allocation.
+            defaults: Default weight for each key (for proportion calculation).
+
+        Returns:
+            Dictionary with distributed weights summing to exactly `remaining`.
+
+        """
+        distribution: dict[str, int] = {}
+        total_default = sum(defaults[k] for k in missing_keys)
+
+        if total_default == 0:
+            logger.warning(
+                f"All default weights for missing keys {missing_keys}"
+                f" are 0. Distributing equally."
+            )
+            # Edge case: all defaults are 0, distribute equally
+            base_allocation = remaining // len(missing_keys)
+            extra = remaining % len(missing_keys)
+            for i, key in enumerate(missing_keys):
+                distribution[key] = base_allocation + (1 if i < extra else 0)
+            return distribution
+
+        # Step 1: Calculate base allocation and fractional parts
+        allocations: dict[str, float] = {}
+        base_allocations: dict[str, int] = {}
+        fractional_parts: dict[str, float] = {}
+
+        for key in missing_keys:
+            proportion = defaults[key] / total_default
+            exact_allocation = remaining * proportion
+            base = int(exact_allocation)  # floor division
+
+            allocations[key] = exact_allocation
+            base_allocations[key] = base
+            fractional_parts[key] = exact_allocation - base
+
+        total_base = sum(base_allocations.values())
+        quota_remaining = remaining - total_base
+
+        # Step 2: Sort by fractional part (descending) and distribute remainder
+        # Keys with larger fractional parts get priority
+        sorted_by_remainder = sorted(
+            missing_keys,
+            key=lambda k: fractional_parts[k],
+            reverse=True,
+        )
+
+        for i in range(quota_remaining):
+            lucky_key = sorted_by_remainder[i]
+            base_allocations[lucky_key] += 1
+
+        return base_allocations
+
+    def __init__(self, **weight_params: Unpack[WeightParams]) -> None:
+        """Initialize the StaticWeightProvider with optional weight parameters.
+        The constructor builds the internal mapping of OS to StaticOSWeights
+        based on the provided weights and the static introspection data.
+
+        Args:
+            **weight_params: Optional per-OS weight overrides. Keys can be
+
+        """  # noqa: D205
+        defaults = {"windows": 30, "macos": 15, "linux": 5, "android": 50}
         weights: dict[str, int]
         if not weight_params:
             weights = dict(defaults)
@@ -118,30 +203,24 @@ class StaticWeightProvider(IWeightProvider):
 
         if missing_keys:
             provided_sum = sum(weights.values())
-            if provided_sum >= 100:
+            if provided_sum > 100:
                 raise ValueError(
                     f"Sum of provided weights ({provided_sum})"
-                    f" is >= 100, but keys {missing_keys} are missing."
+                    f" is > 100, but keys {missing_keys} are missing."
                 )
 
             remaining = 100 - provided_sum
-            default_sum_missing = sum(defaults[k] for k in missing_keys)
 
-            current_distributed = 0
-            for i, key in enumerate(missing_keys):
-                if i == len(missing_keys) - 1:
-                    val = remaining - current_distributed
-                else:
-                    val = int(
-                        round(
-                            (defaults[key] / default_sum_missing) * remaining
-                        )
-                    )
-                    current_distributed += val
-                weights[key] = val
+            # Use Largest Remainder Method for distribution
+            distributed = self._distribute_weights_lrm(
+                remaining, missing_keys, defaults
+            )
+            weights.update(distributed)
 
         if sum(weights.values()) != 100:
-            raise ValueError("Weights must sum up to 100")
+            raise ValueError(
+                f"Weights must sum up to 100, got {sum(weights.values())}"
+            )
 
         self.map = {
             OS.WINDOWS: StaticOSWeights(
@@ -190,6 +269,7 @@ class StaticWeightProvider(IWeightProvider):
         Returns:
             A ``StaticOSWeights`` with versions, models, weights,
             and the pre-computed compatibility map.
+
         """
         return self.map[os]
 
@@ -198,6 +278,7 @@ class StaticWeightProvider(IWeightProvider):
 
         Returns:
             Tuple of ``OS`` enum members.
+
         """
         return self.os_names
 
@@ -206,5 +287,6 @@ class StaticWeightProvider(IWeightProvider):
 
         Returns:
             Tuple of integer weights aligned with ``get_os_names()``.
+
         """
         return self.os_probabilities

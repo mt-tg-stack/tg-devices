@@ -72,7 +72,7 @@ class LinuxDesktopModel(DeviceModel):
     FRAMEWORK_16_AMD_7040 = "Framework Laptop 16 (AMD Ryzen 7040 Series)"
     FRAMEWORK_13_AMD_AI300 = "Framework Laptop 13 (AMD Ryzen AI 300 Series)"
     FRAMEWORK_13_INTEL_ULTRA = (
-        "Framework Laptop 13 (Intel Core Ultra Series 1)"  # noqa: E501
+        "Framework Laptop 13 (Intel Core Ultra Series 1)"
     )
     SYSTEM76_LEMUR_PRO = "Lemur Pro (lemp12)"
     SYSTEM76_ORYX_PRO = "Oryx Pro (oryp12)"
