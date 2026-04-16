@@ -15,6 +15,11 @@ This release introduces a **comprehensive test suite**, **improved error handlin
 Added
 -----
 
+- **Largest Remainder Method (LRM)**:
+  - Implemented the Hare-Niemeyer algorithm for weight distribution.
+  - Ensures weights always sum to exactly 100% without rounding errors.
+  - Handles proportional redistribution for partial weight specifications.
+
 - **Comprehensive Test Suite (59+ tests)**:
 
   - Basic functionality tests (profile generation, OS-specific generation)
@@ -160,15 +165,7 @@ Backward Compatibility
 Known Limitations
 ~~~~~~~~~~~~~~~~~
 
-1. Weight distribution uses standard rounding instead of Largest Remainder Method
-   - Potential for minor rounding discrepancies with complex weight distributions
-   - Planned improvement for v0.1.4
-
-2. No caching of compatibility maps
-   - Each generation recomputes compatibility checks
-   - Planned optimization for high-volume generation
-
-3. Limited device model coverage for older systems
+1. Limited device model coverage for older systems
    - Windows Vista/7 models are representative but not exhaustive
    - macOS 10.x models are representative but limited
    - Planned expansion in future releases
