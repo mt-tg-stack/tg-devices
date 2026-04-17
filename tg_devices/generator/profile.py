@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class OSProfile:
+class DeviceProfile:
     """Immutable device profile for a Telegram client session.
 
     This dataclass contains the final, string-serialized output of

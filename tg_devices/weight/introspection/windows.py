@@ -12,7 +12,7 @@ from tg_devices.enums.windows import (
     WindowsDesktopModel,
     WindowsSystemVersion,
 )
-from tg_devices.weight.weights import Weights
+from tg_devices.weight.weights import VersionWeights
 
 WINDOWS_APP_WEIGHTS: Final[Mapping[WindowsAppVersion, int]] = {
     WindowsAppVersion.V4_8_3_X64: 1,
@@ -176,6 +176,6 @@ WINDOWS_DEVICE_MODEL: Final[tuple[WindowsDesktopModel, ...]] = tuple(
     WindowsDesktopModel
 )
 
-WINDOWS_WEIGHTS_DT: Final[Weights] = Weights(
+WINDOWS_WEIGHTS_DT: Final[VersionWeights] = VersionWeights(
     WIN_APPS_WEIGHTS, WIN_SYSTEMS_WEIGHTS
 )

@@ -6,13 +6,12 @@ from typing import Unpack
 from tg_devices.enums.app_version import AppVersion
 from tg_devices.enums.os import OS
 from tg_devices.enums.system_version import SystemVersion
-from tg_devices.generator.profile import OSProfile
+from tg_devices.generator.profile import DeviceProfile
 from tg_devices.generator.protocols import IDeviceProfileGenerator
 from tg_devices.random.protocols import IRandomProvider
 from tg_devices.random.provider import StandardRandomProvider
-from tg_devices.weight.protocols import IWeightProvider
+from tg_devices.weight.protocols import IOSProfile, IWeightProvider
 from tg_devices.weight.provider import StaticWeightProvider, WeightParams
-from tg_devices.weight.weights import StaticOSWeights
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,7 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
 
     def _get_compatible_apps(
         self,
-        weights: StaticOSWeights,
+        os_profile: IOSProfile,
         system_version: SystemVersion,
     ) -> tuple[tuple[AppVersion, ...], tuple[int, ...]]:
         """Retrieve compatible app versions for a given system version.
@@ -68,7 +67,7 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
         weights, or ultimately defaults to all apps with equal weights.
 
         Args:
-            weights: OS weight bundle containing compatibility map and app
+            os_profile: OS profile containing compatibility map and app
                 weights.
             system_version: The system version for which to find compatible
                 apps.
@@ -81,12 +80,12 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
                 compatible apps.
 
         """
-        if system_version in weights.compatibility_map:
-            return weights.compatibility_map[system_version]
+        if system_version in os_profile.compatibility_map:
+            return os_profile.compatibility_map[system_version]
 
         logger.warning("System version %s not found in compatibility map.")
 
-        fallback_apps, fallback_weights = self._get_fallback_apps(weights)
+        fallback_apps, fallback_weights = self._get_fallback_apps(os_profile)
         if fallback_apps:
             logger.warning(
                 f"Using fallback app set for system "
@@ -98,39 +97,44 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
         logger.warning(
             "No fallback apps found, using all apps with equal weights"
         )
-        equal_weights = tuple(1 for _ in weights.app_version)
-        return weights.app_version, equal_weights
+        equal_weights = tuple(1 for _ in os_profile.app_version)
+        return os_profile.app_version, equal_weights
 
     def _get_fallback_apps(
         self,
-        weights: StaticOSWeights,
+        os_profile: IOSProfile,
     ) -> tuple[tuple[AppVersion, ...], tuple[int, ...]]:
         """Generate fallback app set when compatibility map is incomplete.
 
         Strategy: Use the most frequently weighted apps (top 50% by weight).
 
         Args:
-            weights: OS weight bundle with app versions and weights.
+            os_profile: OS profile with app versions and weights.
 
         Returns:
             Tuple of (fallback_apps, fallback_weights), or empty tuple
             if no apps available.
 
         """
-        if not weights.app_version or not weights.weights.app_weights:
+        if (
+            not os_profile.app_version
+            or not os_profile.version_weights.app_weights
+        ):
             return (), ()
 
         # Create list of (app, weight) pairs sorted by weight descending
         app_weight_pairs = sorted(
             zip(
-                weights.app_version, weights.weights.app_weights, strict=False
+                os_profile.app_version,
+                os_profile.version_weights.app_weights,
+                strict=False,
             ),
             key=lambda x: x[1],
             reverse=True,
         )
 
         # Calculate cumulative weight threshold (50% of total)
-        total_weight = sum(weights.weights.app_weights)
+        total_weight = sum(os_profile.version_weights.app_weights)
         threshold = total_weight / 2
 
         # Accumulate apps until reaching threshold
@@ -148,40 +152,35 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
 
         logger.debug(
             f"Fallback apps selected: {len(selected_apps)} out of "
-            f"{len(weights.app_version)} (weight: {cumulative}/{total_weight})"
+            f"{len(os_profile.app_version)} "
+            f"(weight: {cumulative}/{total_weight})"
         )
 
         return (tuple(selected_apps), tuple(selected_weights))
 
-    def generate_os_profile(self, os: OS | None = None) -> OSProfile:
-        """Generate a complete device profile.
-
-        Selects an OS (or uses the one provided), then picks a
-        system version, a compatible app version, and a device model
-        using weighted random selection.
-
-        Args:
-            os: Target operating system. If ``None``, an OS is
-                chosen via weighted random selection.
-
-        Returns:
-            A frozen ``OSProfile`` with all fields populated.
-
-        """
+    def generate_device_profile(
+        self,
+        os: OS | None = None,
+        os_profile: IOSProfile | None = None,
+    ) -> DeviceProfile:
         try:
             chosen_os = os or self._random_provider.choice(
                 population=self._weight_provider.get_os_names(),
                 weights=self._weight_provider.get_os_probabilities(),
             )
-            weights = self._weight_provider.get_os_weights(chosen_os)
+            os_profile = (
+                os_profile
+                if os and os_profile
+                else self._weight_provider.get_os_profile(chosen_os)
+            )
 
             system_version = self._random_provider.choice(
-                population=weights.system_version,
-                weights=weights.weights.system_weights,
+                population=os_profile.system_version,
+                weights=os_profile.version_weights.system_weights,
             )
 
             filtered_apps, filtered_weights = self._get_compatible_apps(
-                weights=weights, system_version=system_version
+                os_profile=os_profile, system_version=system_version
             )
 
             app_version = self._random_provider.choice(
@@ -189,7 +188,7 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
             )
 
             device_model = self._random_provider.choice(
-                population=weights.device_model
+                population=os_profile.device_model
             )
         except ValueError as e:
             logger.error(f"Error generating profile: {e}")
@@ -200,7 +199,7 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
                 f"Data corruption missing compatibility map for {e}"
             ) from e
 
-        return OSProfile(
+        return DeviceProfile(
             os=chosen_os.value,
             app_version=app_version.value,
             system_version=system_version.value,

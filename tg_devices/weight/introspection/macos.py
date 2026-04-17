@@ -12,7 +12,7 @@ from tg_devices.enums.macos import (
 )
 from tg_devices.enums.os import OS
 from tg_devices.enums.system_version import SystemVersion
-from tg_devices.weight.weights import Weights
+from tg_devices.weight.weights import VersionWeights
 
 MACOS_APP_WEIGHTS: Final[Mapping[MacOSAppVersion, int]] = {
     MacOSAppVersion.V4_8_3_INTEL: 1,
@@ -198,6 +198,6 @@ MACOS_DEVICE_MODEL: Final[tuple[MacOSDesktopModel, ...]] = tuple(
     MacOSDesktopModel
 )
 
-MACOS_WEIGHTS_DT: Final[Weights] = Weights(
+MACOS_WEIGHTS_DT: Final[VersionWeights] = VersionWeights(
     MAC_APPS_WEIGHTS, MAC_SYSTEMS_WEIGHTS
 )

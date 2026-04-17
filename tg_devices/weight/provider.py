@@ -35,8 +35,8 @@ from tg_devices.weight.introspection import (
     WINDOWS_DEVICE_MODEL,
     WINDOWS_WEIGHTS_DT,
 )
-from tg_devices.weight.protocols import IWeightProvider
-from tg_devices.weight.weights import StaticOSWeights
+from tg_devices.weight.protocols import IOSProfile, IWeightProvider
+from tg_devices.weight.weights import OSProfile
 
 logger = logging.getLogger(__name__)
 
@@ -223,70 +223,48 @@ class StaticWeightProvider(IWeightProvider):
             )
 
         self.map = {
-            OS.WINDOWS: StaticOSWeights(
+            OS.WINDOWS: OSProfile(
                 app_version=self.windows_apps,
                 system_version=self.windows_systems,
                 device_model=self.windows_device_model,
-                weight=weights["windows"],
-                weights=self.windows_weights_dt,
+                selection_weight=weights["windows"],
+                version_weights=self.windows_weights_dt,
                 compatibility_map=self.windows_compatibility_map,
             ),
-            OS.MACOS: StaticOSWeights(
+            OS.MACOS: OSProfile(
                 app_version=self.macos_apps,
                 system_version=self.macos_systems,
                 device_model=self.macos_device_model,
-                weight=weights["macos"],
-                weights=self.macos_weights_dt,
+                selection_weight=weights["macos"],
+                version_weights=self.macos_weights_dt,
                 compatibility_map=self.macos_compatibility_map,
             ),
-            OS.LINUX: StaticOSWeights(
+            OS.LINUX: OSProfile(
                 app_version=self.linux_apps,
                 system_version=self.linux_systems,
                 device_model=self.linux_device_model,
-                weight=weights["linux"],
-                weights=self.linux_weights_dt,
+                selection_weight=weights["linux"],
+                version_weights=self.linux_weights_dt,
                 compatibility_map=self.linux_compatibility_map,
             ),
-            OS.ANDROID: StaticOSWeights(
+            OS.ANDROID: OSProfile(
                 app_version=self.android_apps,
                 system_version=self.android_systems,
                 device_model=self.android_device_model,
-                weight=weights["android"],
-                weights=self.android_weights_dt,
+                selection_weight=weights["android"],
+                version_weights=self.android_weights_dt,
                 compatibility_map=self.android_compatibility_map,
             ),
         }
         self.os_probabilities: tuple[int, ...] = tuple(
-            weight.weight for weight in self.map.values()
+            weight.selection_weight for weight in self.map.values()
         )
 
-    def get_os_weights(self, os: OS) -> StaticOSWeights:
-        """Return the weight bundle for a given OS.
-
-        Args:
-            os: The target operating system.
-
-        Returns:
-            A ``StaticOSWeights`` with versions, models, weights,
-            and the pre-computed compatibility map.
-
-        """
+    def get_os_profile(self, os: OS) -> IOSProfile:
         return self.map[os]
 
     def get_os_names(self) -> tuple[OS, ...]:
-        """Return all supported operating systems.
-
-        Returns:
-            Tuple of ``OS`` enum members.
-
-        """
         return self.os_names
 
     def get_os_probabilities(self) -> tuple[int, ...]:
-        """Return selection probabilities for each OS.
-
-        Returns:
-            Tuple of integer weights aligned with ``get_os_names()``.
-
-        """
         return self.os_probabilities

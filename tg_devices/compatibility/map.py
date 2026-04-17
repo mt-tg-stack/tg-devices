@@ -1,9 +1,16 @@
 """Pre-computation of per-system-version compatibility maps."""
 
+from typing import TypeAlias
+
 from tg_devices.compatibility.inspection import is_compatible
 from tg_devices.enums.app_version import AppVersion
 from tg_devices.enums.os import OS
 from tg_devices.enums.system_version import SystemVersion
+
+CompatibilityMap: TypeAlias = dict[  # noqa: UP040
+    SystemVersion,
+    tuple[tuple[AppVersion, ...], tuple[int, ...]],
+]
 
 
 def get_compatibility_map(
@@ -11,7 +18,7 @@ def get_compatibility_map(
     all_apps: tuple[AppVersion, ...],
     all_app_weights: tuple[int, ...],
     all_systems: tuple[SystemVersion, ...],
-) -> dict[SystemVersion, tuple[tuple[AppVersion, ...], tuple[int, ...]]]:
+) -> CompatibilityMap:
     """Build a mapping from each system version to compatible apps.
 
     For every system version, filters app versions through

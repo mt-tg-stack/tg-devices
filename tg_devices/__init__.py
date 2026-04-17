@@ -21,6 +21,6 @@ Typical usage example:
 
 from tg_devices.enums.os import OS
 from tg_devices.generator.generator import DeviceProfileGenerator
-from tg_devices.generator.profile import OSProfile
+from tg_devices.generator.profile import DeviceProfile
 
-__all__ = ["OS", "DeviceProfileGenerator", "OSProfile"]
+__all__ = ["OS", "DeviceProfileGenerator", "DeviceProfile"]

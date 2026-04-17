@@ -12,7 +12,7 @@ from tg_devices.enums.android import (
 from tg_devices.enums.app_version import AppVersion
 from tg_devices.enums.os import OS
 from tg_devices.enums.system_version import SystemVersion
-from tg_devices.weight.weights import Weights
+from tg_devices.weight.weights import VersionWeights
 
 ANDROID_APP_WEIGHTS: Final[Mapping[AndroidAppVersion, int]] = {
     AndroidAppVersion.V8_9_3: 1,
@@ -82,6 +82,6 @@ ANDROID_COMPATIBILITY_MAP: Final[
 
 ANDROID_DEVICE_MODEL: Final[tuple[AndroidModel, ...]] = tuple(AndroidModel)
 
-ANDROID_WEIGHTS_DT: Final[Weights] = Weights(
+ANDROID_WEIGHTS_DT: Final[VersionWeights] = VersionWeights(
     ANDROID_APPS_WEIGHTS, ANDROID_SYSTEMS_WEIGHTS
 )

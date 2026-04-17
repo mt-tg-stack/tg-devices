@@ -2,7 +2,7 @@
 
 import pytest
 
-from tg_devices import OS, DeviceProfileGenerator, OSProfile
+from tg_devices import OS, DeviceProfile, DeviceProfileGenerator
 from tg_devices.compatibility.inspection import is_compatible
 from tg_devices.random.provider import StandardRandomProvider
 
@@ -13,9 +13,9 @@ class TestDeviceProfileGeneratorBasic:
     def test_generate_os_profile(self) -> None:
         """Test that generated profile has valid OS."""
         gen = DeviceProfileGenerator()
-        profile = gen.generate_os_profile()
+        profile = gen.generate_device_profile()
 
-        assert isinstance(profile, OSProfile)
+        assert isinstance(profile, DeviceProfile)
         assert profile.os in [os.value for os in OS]
 
     def test_generate_specific_os_profile(self) -> None:
@@ -23,7 +23,7 @@ class TestDeviceProfileGeneratorBasic:
         gen = DeviceProfileGenerator()
 
         for os_enum in OS:
-            profile = gen.generate_os_profile(os=os_enum)
+            profile = gen.generate_device_profile(os=os_enum)
             assert profile.os == os_enum.value
 
 
@@ -39,7 +39,7 @@ class TestWeightOverrides:
         iterations = 1000
 
         for _ in range(iterations):
-            profile = gen.generate_os_profile()
+            profile = gen.generate_device_profile()
             if profile.os == OS.ANDROID.value:
                 android_count += 1
             else:
@@ -54,7 +54,7 @@ class TestWeightOverrides:
         """Test with complete weight specification (all keys provided)."""
         # All weights specified, must sum to 100
         gen = DeviceProfileGenerator(windows=30, macos=15, linux=5, android=50)
-        profiles = [gen.generate_os_profile() for _ in range(100)]
+        profiles = [gen.generate_device_profile() for _ in range(100)]
         assert len(profiles) == 100
 
     def test_weight_partial_all_keys_specified(self) -> None:
@@ -62,7 +62,7 @@ class TestWeightOverrides:
         gen = DeviceProfileGenerator(
             windows=40, macos=20, linux=10, android=30
         )
-        profiles = [gen.generate_os_profile() for _ in range(100)]
+        profiles = [gen.generate_device_profile() for _ in range(100)]
         assert len(profiles) == 100
 
 
@@ -90,12 +90,12 @@ class TestSeedConsistency:
         gen1 = DeviceProfileGenerator(
             random_provider=StandardRandomProvider(seed=42)
         )
-        profile1 = gen1.generate_os_profile()
+        profile1 = gen1.generate_device_profile()
 
         gen2 = DeviceProfileGenerator(
             random_provider=StandardRandomProvider(seed=42)
         )
-        profile2 = gen2.generate_os_profile()
+        profile2 = gen2.generate_device_profile()
 
         assert profile1 == profile2
 
@@ -109,8 +109,8 @@ class TestSeedConsistency:
         )
 
         # Generate multiple profiles, they should differ
-        profiles1 = [gen1.generate_os_profile() for _ in range(10)]
-        profiles2 = [gen2.generate_os_profile() for _ in range(10)]
+        profiles1 = [gen1.generate_device_profile() for _ in range(10)]
+        profiles2 = [gen2.generate_device_profile() for _ in range(10)]
 
         assert profiles1 != profiles2
 
@@ -328,7 +328,7 @@ class TestGeneratedProfilesCompatibility:
         # Generate profiles for each OS
         for os_enum in OS:
             for _ in range(50):
-                profile = gen.generate_os_profile(os=os_enum)
+                profile = gen.generate_device_profile(os=os_enum)
 
                 result = is_compatible(
                     os_enum,
@@ -345,7 +345,7 @@ class TestGeneratedProfilesCompatibility:
         )
 
         for _ in range(200):
-            profile = gen.generate_os_profile()
+            profile = gen.generate_device_profile()
 
             os_enum = OS(profile.os)
             result = is_compatible(
@@ -366,7 +366,7 @@ class TestEdgeCases:
         generated_oses = set()
 
         for _ in range(500):
-            profile = gen.generate_os_profile()
+            profile = gen.generate_device_profile()
             generated_oses.add(profile.os)
 
         # Should have generated for at least 2 different OSes
@@ -375,7 +375,7 @@ class TestEdgeCases:
     def test_profile_immutability(self) -> None:
         """Test that OSProfile instances are immutable."""
         gen = DeviceProfileGenerator()
-        profile = gen.generate_os_profile()
+        profile = gen.generate_device_profile()
 
         # Should not be able to modify frozen dataclass
         with pytest.raises((AttributeError, TypeError)):
@@ -386,7 +386,7 @@ class TestEdgeCases:
         gen = DeviceProfileGenerator(windows=100, macos=0, linux=0, android=0)
 
         for _ in range(50):
-            profile = gen.generate_os_profile()
+            profile = gen.generate_device_profile()
             assert profile.os == OS.WINDOWS.value
 
     def test_equal_weight_distribution(self) -> None:
@@ -397,7 +397,7 @@ class TestEdgeCases:
         generated_oses = set()
 
         for _ in range(500):
-            profile = gen.generate_os_profile()
+            profile = gen.generate_device_profile()
             generated_oses.add(profile.os)
 
         # Should generate all 4 OSes with equal weights
@@ -408,7 +408,7 @@ class TestEdgeCases:
         gen = DeviceProfileGenerator()
 
         for os_enum in OS:
-            profile = gen.generate_os_profile(os=os_enum)
+            profile = gen.generate_device_profile(os=os_enum)
             assert profile.os == os_enum.value
 
     def test_multiple_generators_independent(self) -> None:
@@ -416,9 +416,9 @@ class TestEdgeCases:
         gen1 = DeviceProfileGenerator(android=90)
         gen2 = DeviceProfileGenerator(windows=90)
 
-        profile1 = gen1.generate_os_profile()
-        profile2 = gen2.generate_os_profile()
+        profile1 = gen1.generate_device_profile()
+        profile2 = gen2.generate_device_profile()
 
         # They should be independent
-        assert isinstance(profile1, OSProfile)
-        assert isinstance(profile2, OSProfile)
+        assert isinstance(profile1, DeviceProfile)
+        assert isinstance(profile2, DeviceProfile)

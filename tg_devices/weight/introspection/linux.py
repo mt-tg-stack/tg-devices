@@ -12,7 +12,7 @@ from tg_devices.enums.linux import (
 )
 from tg_devices.enums.os import OS
 from tg_devices.enums.system_version import SystemVersion
-from tg_devices.weight.weights import Weights
+from tg_devices.weight.weights import VersionWeights
 
 LINUX_APP_WEIGHTS: Final[Mapping[LinuxAppVersion, int]] = {
     LinuxAppVersion.V4_8_3: 1,
@@ -246,6 +246,6 @@ LINUX_DEVICE_MODEL: Final[tuple[LinuxDesktopModel, ...]] = tuple(
     LinuxDesktopModel
 )
 
-LINUX_WEIGHTS_DT: Final[Weights] = Weights(
+LINUX_WEIGHTS_DT: Final[VersionWeights] = VersionWeights(
     LIN_APPS_WEIGHTS, LIN_SYSTEMS_WEIGHTS
 )

@@ -2,24 +2,26 @@
 
 from dataclasses import dataclass
 
+from tg_devices.compatibility.map import CompatibilityMap
 from tg_devices.enums.app_version import AppVersion
 from tg_devices.enums.device_model import DeviceModel
 from tg_devices.enums.system_version import SystemVersion
+from tg_devices.weight.protocols import (
+    IOSProfile,
+    IVersionWeight,
+)
 
 
 @dataclass
-class Weights:
-    """Probability weights for app and system version selection.
+class VersionWeights(IVersionWeight):
+    """Relative weights for app and system version selection.
 
-    These weights are used by the randomness provider to pick a
-    version from the corresponding population tuple.
+    Weights are aligned positionally with the corresponding version
+    enums and are passed directly to ``random.choices``.
 
     Attributes:
-        app_weights: Relative weights (integers) aligned with the
-            available app version enums.
-        system_weights: Relative weights (integers) aligned with the
-            available system version enums.
-
+        app_weights: Weights aligned with available ``AppVersion`` enums.
+        system_weights: Weights aligned with available ``SystemVersion`` enums.
     """
 
     app_weights: tuple[int, ...]
@@ -27,30 +29,27 @@ class Weights:
 
 
 @dataclass
-class StaticOSWeights:
-    """Complete weight and data bundle for a single operating system.
+class OSProfile(IOSProfile):
+    """Complete data bundle for generating a device profile on one OS.
 
-    This dataclass encapsulates all the information needed by the
-    generator to produce a profile for a specific OS, including
-    historical and predicted version data.
+    Encapsulates all static data the generator needs: known versions,
+    device models, selection probability, version weights, and a
+    pre-computed compatibility map.
 
     Attributes:
-        app_version: All known app versions for this OS.
-        system_version: All known system versions for this OS.
-        device_model: All known device models for this OS.
-        weight: Relative probability (0-100) of selecting this OS
-            compared to others in the same budget.
-        weights: Nested ``Weights`` for internal version selection.
-        compatibility_map: Pre-computed mapping ensuring that the
-            selected app version is valid for the chosen system version.
-
+        app_versions: All known ``AppVersion`` values for this OS.
+        system_versions: All known ``SystemVersion`` values for this OS.
+        device_models: All known ``DeviceModel`` values for this OS.
+        selection_weight: Relative probability (0–100) of picking this
+            OS over others in the same pool.
+        version_weights: Nested weights for internal version selection.
+        compatibility_map: Maps each ``SystemVersion`` to the app
+            versions valid for it and their corresponding weights.
     """
 
     app_version: tuple[AppVersion, ...]
     system_version: tuple[SystemVersion, ...]
     device_model: tuple[DeviceModel, ...]
-    weight: int
-    weights: Weights
-    compatibility_map: dict[
-        SystemVersion, tuple[tuple[AppVersion, ...], tuple[int, ...]]
-    ]
+    selection_weight: int
+    version_weights: IVersionWeight
+    compatibility_map: CompatibilityMap
