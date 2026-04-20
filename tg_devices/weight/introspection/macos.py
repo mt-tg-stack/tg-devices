@@ -12,192 +12,36 @@ from tg_devices.enums.macos import (
 )
 from tg_devices.enums.os import OS
 from tg_devices.enums.system_version import SystemVersion
+from tg_devices.weight.introspection.weight_precomputation import (
+    PLATFORM_DEFAULTS,
+    compute_weights,
+)
 from tg_devices.weight.weights import VersionWeights
 
-MACOS_APP_WEIGHTS: Final[Mapping[MacOSAppVersion, int]] = {
-    MacOSAppVersion.V4_8_3_INTEL: 1,
-    MacOSAppVersion.V4_8_3_ARM64: 1,
-    MacOSAppVersion.V4_8_1_INTEL: 1,
-    MacOSAppVersion.V4_8_1_ARM64: 1,
-    MacOSAppVersion.V4_9_9_INTEL: 1,
-    MacOSAppVersion.V4_9_9_ARM64: 1,
-    MacOSAppVersion.V4_9_6_INTEL: 1,
-    MacOSAppVersion.V4_9_6_ARM64: 1,
-    MacOSAppVersion.V4_9_4_ARM64: 1,
-    MacOSAppVersion.V4_10_4_INTEL: 1,
-    MacOSAppVersion.V4_10_4_ARM64: 1,
-    MacOSAppVersion.V4_10_2_ARM64: 1,
-    MacOSAppVersion.V4_11_6_INTEL: 1,
-    MacOSAppVersion.V4_11_6_ARM64: 1,
-    MacOSAppVersion.V4_11_5_ARM64: 1,
-    MacOSAppVersion.V4_11_3_ARM64: 1,
-    MacOSAppVersion.V4_12_2_INTEL: 1,
-    MacOSAppVersion.V4_12_2_ARM64: 1,
-    MacOSAppVersion.V4_13_1_ARM64: 1,
-    MacOSAppVersion.V4_13_0_ARM64: 1,
-    MacOSAppVersion.V4_14_9_INTEL: 2,
-    MacOSAppVersion.V4_14_9_ARM64: 2,
-    MacOSAppVersion.V4_14_4_ARM64: 1,
-    MacOSAppVersion.V4_14_1_ARM64: 1,
-    MacOSAppVersion.V4_15_4_ARM64: 2,
-    MacOSAppVersion.V4_15_2_ARM64: 1,
-    MacOSAppVersion.V4_15_0_ARM64: 1,
-    MacOSAppVersion.V4_16_9_INTEL: 2,
-    MacOSAppVersion.V4_16_9_ARM64: 3,
-    MacOSAppVersion.V4_16_7_ARM64: 2,
-    MacOSAppVersion.V4_16_6_ARM64: 1,
-    MacOSAppVersion.V5_0_4_INTEL: 2,
-    MacOSAppVersion.V5_0_4_ARM64: 4,
-    MacOSAppVersion.V5_0_1_ARM64: 2,
-    MacOSAppVersion.V5_1_9_ARM64: 3,
-    MacOSAppVersion.V5_1_7_ARM64: 2,
-    MacOSAppVersion.V5_1_4_ARM64: 2,
-    MacOSAppVersion.V5_2_3_ARM64: 3,
-    MacOSAppVersion.V5_2_1_ARM64: 2,
-    MacOSAppVersion.V5_3_3_ARM64: 3,
-    MacOSAppVersion.V5_3_2_ARM64: 2,
-    MacOSAppVersion.V5_3_1_ARM64: 2,
-    MacOSAppVersion.V5_4_1_ARM64: 3,
-    MacOSAppVersion.V5_5_5_INTEL: 2,
-    MacOSAppVersion.V5_5_5_ARM64: 5,
-    MacOSAppVersion.V5_5_4_ARM64: 4,
-    MacOSAppVersion.V5_5_3_ARM64: 3,
-    MacOSAppVersion.V5_5_2_ARM64: 3,
-    MacOSAppVersion.V5_5_1_ARM64: 2,
-    MacOSAppVersion.V5_5_0_ARM64: 2,
-    MacOSAppVersion.V5_6_3_INTEL: 2,
-    MacOSAppVersion.V5_6_3_ARM64: 5,
-    MacOSAppVersion.V5_6_2_ARM64: 4,
-    MacOSAppVersion.V5_6_1_ARM64: 3,
-    MacOSAppVersion.V5_6_0_ARM64: 2,
-    MacOSAppVersion.V5_7_2_ARM64: 5,
-    MacOSAppVersion.V5_7_1_ARM64: 4,
-    MacOSAppVersion.V5_7_0_ARM64: 3,
-    MacOSAppVersion.V5_8_3_ARM64: 5,
-    MacOSAppVersion.V5_8_2_ARM64: 4,
-    MacOSAppVersion.V5_8_1_ARM64: 3,
-    MacOSAppVersion.V5_8_0_ARM64: 2,
-    MacOSAppVersion.V5_9_0_ARM64: 4,
-    MacOSAppVersion.V5_10_7_INTEL: 3,
-    MacOSAppVersion.V5_10_7_ARM64: 8,
-    MacOSAppVersion.V5_10_6_ARM64: 6,
-    MacOSAppVersion.V5_10_5_ARM64: 5,
-    MacOSAppVersion.V5_10_4_ARM64: 4,
-    MacOSAppVersion.V5_10_3_ARM64: 3,
-    MacOSAppVersion.V5_10_0_ARM64: 2,
-    MacOSAppVersion.V5_11_1_ARM64: 6,
-    MacOSAppVersion.V5_11_0_ARM64: 4,
-    MacOSAppVersion.V5_12_3_ARM64: 6,
-    MacOSAppVersion.V5_12_2_ARM64: 5,
-    MacOSAppVersion.V5_12_1_ARM64: 4,
-    MacOSAppVersion.V5_12_0_ARM64: 3,
-    MacOSAppVersion.V5_13_1_ARM64: 6,
-    MacOSAppVersion.V5_13_0_ARM64: 4,
-    MacOSAppVersion.V5_14_3_ARM64: 7,
-    MacOSAppVersion.V5_14_2_ARM64: 5,
-    MacOSAppVersion.V5_14_1_ARM64: 4,
-    MacOSAppVersion.V5_14_0_ARM64: 3,
-    MacOSAppVersion.V5_15_4_ARM64: 8,
-    MacOSAppVersion.V5_15_3_ARM64: 6,
-    MacOSAppVersion.V5_15_2_ARM64: 5,
-    MacOSAppVersion.V5_15_1_ARM64: 4,
-    MacOSAppVersion.V5_15_0_ARM64: 3,
-    MacOSAppVersion.V5_16_6_ARM64: 9,
-    MacOSAppVersion.V5_16_5_ARM64: 7,
-    MacOSAppVersion.V5_16_4_ARM64: 6,
-    MacOSAppVersion.V5_16_3_ARM64: 5,
-    MacOSAppVersion.V5_16_2_ARM64: 4,
-    MacOSAppVersion.V5_16_1_ARM64: 3,
-    MacOSAppVersion.V5_16_0_ARM64: 3,
-    MacOSAppVersion.V6_0_2_ARM64: 10,
-    MacOSAppVersion.V6_0_1_ARM64: 7,
-    MacOSAppVersion.V6_0_0_ARM64: 5,
-    MacOSAppVersion.V6_1_4_ARM64: 12,
-    MacOSAppVersion.V6_1_3_ARM64: 10,
-    MacOSAppVersion.V6_1_2_ARM64: 7,
-    MacOSAppVersion.V6_1_1_ARM64: 5,
-    MacOSAppVersion.V6_1_0_ARM64: 4,
-    MacOSAppVersion.V6_2_4_ARM64: 12,
-    MacOSAppVersion.V6_2_3_ARM64: 9,
-    MacOSAppVersion.V6_2_2_ARM64: 6,
-    MacOSAppVersion.V6_2_1_ARM64: 5,
-    MacOSAppVersion.V6_2_0_ARM64: 4,
-    MacOSAppVersion.V6_3_9_ARM64: 14,
-    MacOSAppVersion.V6_3_8_ARM64: 11,
-    MacOSAppVersion.V6_3_7_ARM64: 9,
-    MacOSAppVersion.V6_3_6_ARM64: 7,
-    MacOSAppVersion.V6_3_5_ARM64: 5,
-    MacOSAppVersion.V6_3_4_ARM64: 4,
-    MacOSAppVersion.V6_3_3_ARM64: 3,
-    MacOSAppVersion.V6_3_2_ARM64: 3,
-    MacOSAppVersion.V6_3_1_ARM64: 3,
-    MacOSAppVersion.V6_3_0_ARM64: 2,
-    MacOSAppVersion.V6_4_2_ARM64: 15,
-    MacOSAppVersion.V6_4_1_ARM64: 10,
-    MacOSAppVersion.V6_4_0_ARM64: 7,
-    MacOSAppVersion.V6_5_1_ARM64: 20,
-    MacOSAppVersion.V6_5_0_ARM64: 15,
-    MacOSAppVersion.V5_10_0_STORE_ARM64: 1,
-    MacOSAppVersion.V5_15_0_STORE_ARM64: 1,
-    MacOSAppVersion.V6_0_0_STORE_ARM64: 2,
-    MacOSAppVersion.V6_3_0_STORE_ARM64: 2,
-    MacOSAppVersion.V6_5_1_STORE_ARM64: 3,
-    MacOSAppVersion.V4_14_9_STORE_INTEL: 1,
-    MacOSAppVersion.V4_16_9_STORE_INTEL: 1,
-}
+MACOS_APP_WEIGHT_MAP: Final[Mapping[MacOSAppVersion, int]] = compute_weights(
+    MacOSAppVersion, params=PLATFORM_DEFAULTS["macos_app"]
+)
 
-MACOS_SYSTEM_WEIGHTS: Final[Mapping[MacOSSystemVersion, int]] = {
-    MacOSSystemVersion.HIGH_SIERRA_10_13_6: 1,
-    MacOSSystemVersion.MOJAVE_10_14_6: 1,
-    MacOSSystemVersion.CATALINA_10_15_7: 2,
-    MacOSSystemVersion.BIG_SUR_11_7_10: 2,
-    MacOSSystemVersion.BIG_SUR_11_6_8: 1,
-    MacOSSystemVersion.MONTEREY_12_7_6: 5,
-    MacOSSystemVersion.MONTEREY_12_7_4: 3,
-    MacOSSystemVersion.MONTEREY_12_6_9: 2,
-    MacOSSystemVersion.VENTURA_13_7_4: 8,
-    MacOSSystemVersion.VENTURA_13_7_2: 6,
-    MacOSSystemVersion.VENTURA_13_6_6: 5,
-    MacOSSystemVersion.VENTURA_13_6_4: 4,
-    MacOSSystemVersion.VENTURA_13_5: 3,
-    MacOSSystemVersion.SONOMA_14_7_4: 14,
-    MacOSSystemVersion.SONOMA_14_7_2: 12,
-    MacOSSystemVersion.SONOMA_14_7_1: 10,
-    MacOSSystemVersion.SONOMA_14_6_1: 9,
-    MacOSSystemVersion.SONOMA_14_6: 7,
-    MacOSSystemVersion.SONOMA_14_5: 5,
-    MacOSSystemVersion.SONOMA_14_4_1: 4,
-    MacOSSystemVersion.SONOMA_14_3_1: 3,
-    MacOSSystemVersion.SONOMA_14_2_1: 2,
-    MacOSSystemVersion.SONOMA_14_1_1: 1,
-    MacOSSystemVersion.SEQUOIA_15_3_2: 18,
-    MacOSSystemVersion.SEQUOIA_15_3_1: 14,
-    MacOSSystemVersion.SEQUOIA_15_3: 12,
-    MacOSSystemVersion.SEQUOIA_15_2: 10,
-    MacOSSystemVersion.SEQUOIA_15_1_1: 7,
-    MacOSSystemVersion.SEQUOIA_15_1: 5,
-    MacOSSystemVersion.SEQUOIA_15_0_1: 3,
-    MacOSSystemVersion.SEQUOIA_15_0: 2,
-    MacOSSystemVersion.TAHOE_26_3: 5,
-    MacOSSystemVersion.TAHOE_26_2: 3,
-    MacOSSystemVersion.TAHOE_26_1: 2,
-    MacOSSystemVersion.TAHOE_26_0: 1,
-}
+MACOS_SYSTEM_WEIGHT_MAP: Final[Mapping[MacOSSystemVersion, int]] = (
+    compute_weights(MacOSSystemVersion, params=PLATFORM_DEFAULTS["macos_sys"])
+)
 
-MAC_APPS: Final = tuple(MACOS_APP_WEIGHTS.keys())
-MAC_APPS_WEIGHTS: Final = tuple(MACOS_APP_WEIGHTS.values())
+MACOS_APP_VERSIONS: Final = tuple(MACOS_APP_WEIGHT_MAP.keys())
+MACOS_APP_WEIGHTS: Final = tuple(MACOS_APP_WEIGHT_MAP.values())
 
-MAC_SYSTEMS: Final = tuple(MACOS_SYSTEM_WEIGHTS.keys())
-MAC_SYSTEMS_WEIGHTS: Final = tuple(MACOS_SYSTEM_WEIGHTS.values())
+MACOS_SYSTEM_VERSIONS: Final = tuple(MACOS_SYSTEM_WEIGHT_MAP.keys())
+MACOS_SYSTEM_WEIGHTS: Final = tuple(MACOS_SYSTEM_WEIGHT_MAP.values())
 
 MACOS_COMPATIBILITY_MAP: Final[
     dict[SystemVersion, tuple[tuple[AppVersion, ...], tuple[int, ...]]]
-] = get_compatibility_map(OS.MACOS, MAC_APPS, MAC_APPS_WEIGHTS, MAC_SYSTEMS)
+] = get_compatibility_map(
+    OS.MACOS, MACOS_APP_VERSIONS, MACOS_APP_WEIGHTS, MACOS_SYSTEM_VERSIONS
+)
 
-MACOS_DEVICE_MODEL: Final[tuple[MacOSDesktopModel, ...]] = tuple(
+MACOS_DEVICE_MODELS: Final[tuple[MacOSDesktopModel, ...]] = tuple(
     MacOSDesktopModel
 )
 
-MACOS_WEIGHTS_DT: Final[VersionWeights] = VersionWeights(
-    MAC_APPS_WEIGHTS, MAC_SYSTEMS_WEIGHTS
+MACOS_WEIGHTS_DATA: Final[VersionWeights] = VersionWeights(
+    MACOS_APP_WEIGHTS, MACOS_SYSTEM_WEIGHTS
 )

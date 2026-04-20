@@ -7,6 +7,116 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_,
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+0.1.5 - 2026-04-20
+==================
+
+This release introduces a **sophisticated weight precomputation engine** based on Gaussian distribution curves and significantly expands the test suite to ensure statistical accuracy and naming consistency.
+
+Breaking Changes
+----------------
+
+- **Renamed internal weight constants**: Unified naming convention for all pre-computed OS weight data in ``tg_devices/weight/introspection/``.
+  - Example: ``ANDROID_APPS`` -> ``ANDROID_APP_VERSIONS``, ``MAC_APPS_WEIGHTS`` -> ``MACOS_APP_WEIGHTS``, etc.
+- **Dynamic Weight Precomputation**: Switched from hardcoded weight dictionaries to dynamic generation using Gaussian curves in the introspection layer.
+- **Updated introspection exports**: Cleaned up ``tg_devices/weight/introspection/__init__.py`` to use grouped imports and explicit ``__all__``.
+
+Added
+-----
+
+- **Gaussian Weight Engine**:
+  - New module ``tg_devices.weight.introspection.weight_precomputation`` for generating statistically plausible version distributions.
+  - Support for custom ``WeightCurveParams`` (peak ratio, sigma spread, max/min weights).
+  - Specialized defaults for every supported platform (Windows, macOS, Linux, Android) for both apps and system versions.
+- **Major Test Suite Expansion**:
+  - Increased test count from 59 to **152 tests**.
+  - New comprehensive tests for weight curves, peak positioning, and distribution boundaries.
+  - Rigorous verification of version sorting and peer-group handling in weight calculation.
+- **Instructional Context**: Added ``GEMINI.md`` to provide better architectural context for AI-assisted development.
+
+Changed
+-------
+
+- **Code Cleanup**: Removed redundant ``as`` aliases in internal re-exports.
+- **Internal Consistency**: Standardized OS prefixes across all weight introspection files (e.g., always using ``LINUX_`` instead of ``LIN_``).
+- **Documentation**: Updated README badges and testing sections to reflect the expanded coverage.
+
+Fixed
+-----
+
+- **Weight Inconsistencies**: Resolved mixed naming styles and manual weight errors by switching to automated curve-based generation.
+- **Distribution Shape**: Improved the realism of version distribution—users now statistically lag behind the latest releases in a way that matches real-world patterns.
+
+Testing
+~~~~~~~
+
+.. code-block:: text
+
+    ✅ 152 tests passed in 0.40 seconds
+
+    Test Coverage Breakdown:
+    - Weight Curve Logic: 25+ tests
+    - OS-specific Distributions: 40+ tests
+    - Version Compatibility: 50+ tests
+    - Generator Integration: 20+ tests
+    - Edge Cases & Protocols: 15+ tests
+
+0.1.4 - 2026-04-17
+==================
+
+This release focuses on **refactoring and API clarification**, ensuring consistent naming across the library and better aligning terminology with the generated output.
+
+Breaking Changes
+----------------
+
+- **Renamed OSProfile to DeviceProfile**: The dataclass representing the final generated profile was renamed for clarity.
+- **Renamed generate_os_profile to generate_device_profile**: The main generation method in ``DeviceProfileGenerator`` was renamed to match the new profile class name.
+- **Renamed StaticOSWeights to OSProfile**: The internal data bundle for each OS was renamed to ``OSProfile``.
+- **Renamed Weights to VersionWeights**: The version-level weight container was renamed to ``VersionWeights``.
+
+Added
+-----
+
+- **New Protocols**: Introduced ``IVersionWeight`` and ``IOSProfile`` to formalize internal data structures.
+- **Type Aliases**: Added ``CompatibilityMap`` in ``tg_devices/compatibility/map.py`` for cleaner type signatures.
+
+Changed
+-------
+
+- **API Consistency**: Updated ``IDeviceProfileGenerator`` and ``IWeightProvider`` protocols to use new naming conventions.
+- **Documentation**: Updated all docstrings and examples to reflect the new API.
+- **Type Hints**: Improved type hints throughout the ``generator`` and ``weight`` modules.
+
+Fixed
+-----
+
+- **Docstring inaccuracies**: Corrected descriptions of return types in protocols and implementations.
+- **Protocol alignment**: Ensured all providers strictly adhere to updated protocols.
+
+Migration Guide from v0.1.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following changes are required to migrate code from v0.1.3 to v0.1.4:
+
+**Updating imports:**
+
+.. code-block:: python
+
+    # v0.1.3
+    from tg_devices import OSProfile
+
+    # v0.1.4
+    from tg_devices import DeviceProfile
+
+**Updating method calls:**
+
+.. code-block:: python
+
+    # v0.1.3
+    profile = generator.generate_os_profile()
+
+    # v0.1.4
+    profile = generator.generate_device_profile()
+
 0.1.3 - 2026-04-16
 ==================
 

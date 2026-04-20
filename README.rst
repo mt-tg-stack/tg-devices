@@ -18,9 +18,9 @@ tg-devices
    :target: https://github.com/astral-sh/ruff
    :alt: Ruff
 
-.. image:: https://img.shields.io/badge/tests-59%20passed-brightgreen.svg
+.. image:: https://img.shields.io/badge/tests-152%20passed-brightgreen.svg
    :target: https://github.com/mt-tg-stack/tg-devices/actions
-   :alt: 59 Tests Passed
+   :alt: 152 Tests Passed
 
 **tg-devices** is a high-fidelity Python library designed to generate realistic,
 statistically plausible, and technically compatible device profiles for Telegram clients.
@@ -130,7 +130,7 @@ Layered Structure
 4. **Compatibility Layer** (``compatibility/``): Contains the logic for version
    matching and the pre-computed compatibility maps.
 5. **Generator Layer** (``generator/``): The high-level API that orchestrates the
-   layers to produce an ``OSProfile``.
+   layers to produce a ``DeviceProfile``.
 
 Core Protocols
 --------------
@@ -160,17 +160,17 @@ The main entry point for the library.
            **weight_params: Unpack[WeightParams],
        ) -> None: ...
 
-       def generate_os_profile(self, os: OS | None = None) -> OSProfile: ...
+       def generate_device_profile(self, os: OS | None = None) -> DeviceProfile: ...
 
-OSProfile
----------
+DeviceProfile
+-------------
 
 The immutable result of a generation.
 
 .. code-block:: python
 
    @dataclass(frozen=True)
-   class OSProfile:
+   class DeviceProfile:
        os: str             # "Windows", "macOS", "Linux", or "Android"
        app_version: str    # e.g., "6.0.2 x64"
        system_version: str # e.g., "10.0.22631"
@@ -189,7 +189,7 @@ Basic Generation
    from tg_devices import DeviceProfileGenerator
 
    generator = DeviceProfileGenerator()
-   profile = generator.generate_os_profile()
+   profile = generator.generate_device_profile()
 
    print(f"OS: {profile.os} | App: {profile.app_version}")
 
@@ -221,7 +221,7 @@ Generate identical profiles across different runs or machines.
    gen = DeviceProfileGenerator(
        random_provider=StandardRandomProvider(seed=seed)
    )
-   profile = gen.generate_os_profile()  # Always the same for seed 42
+   profile = gen.generate_device_profile()  # Always the same for seed 42
 
 Manual Compatibility Check
 --------------------------

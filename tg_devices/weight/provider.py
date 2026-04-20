@@ -5,35 +5,35 @@ from typing import TypedDict, Unpack, cast
 
 from tg_devices.enums.os import OS
 from tg_devices.weight.introspection import (
-    ANDROID_APPS,
-    ANDROID_APPS_WEIGHTS,
+    ANDROID_APP_VERSIONS,
+    ANDROID_APP_WEIGHTS,
     ANDROID_COMPATIBILITY_MAP,
-    ANDROID_DEVICE_MODEL,
-    ANDROID_SYSTEMS,
-    ANDROID_SYSTEMS_WEIGHTS,
-    ANDROID_WEIGHTS_DT,
-    LIN_APPS_WEIGHTS,
-    LIN_SYSTEMS_WEIGHTS,
-    LINUX_APPS,
+    ANDROID_DEVICE_MODELS,
+    ANDROID_SYSTEM_VERSIONS,
+    ANDROID_SYSTEM_WEIGHTS,
+    ANDROID_WEIGHTS_DATA,
+    LINUX_APP_VERSIONS,
+    LINUX_APP_WEIGHTS,
     LINUX_COMPATIBILITY_MAP,
-    LINUX_DEVICE_MODEL,
-    LINUX_SYSTEMS,
-    LINUX_WEIGHTS_DT,
-    MAC_APPS,
-    MAC_APPS_WEIGHTS,
-    MAC_SYSTEMS,
-    MAC_SYSTEMS_WEIGHTS,
+    LINUX_DEVICE_MODELS,
+    LINUX_SYSTEM_VERSIONS,
+    LINUX_SYSTEM_WEIGHTS,
+    LINUX_WEIGHTS_DATA,
+    MACOS_APP_VERSIONS,
+    MACOS_APP_WEIGHTS,
     MACOS_COMPATIBILITY_MAP,
-    MACOS_DEVICE_MODEL,
-    MACOS_WEIGHTS_DT,
+    MACOS_DEVICE_MODELS,
+    MACOS_SYSTEM_VERSIONS,
+    MACOS_SYSTEM_WEIGHTS,
+    MACOS_WEIGHTS_DATA,
     OS_NAMES,
-    WIN_APPS,
-    WIN_APPS_WEIGHTS,
-    WIN_SYSTEMS,
-    WIN_SYSTEMS_WEIGHTS,
+    WINDOWS_APP_VERSIONS,
+    WINDOWS_APP_WEIGHTS,
     WINDOWS_COMPATIBILITY_MAP,
-    WINDOWS_DEVICE_MODEL,
-    WINDOWS_WEIGHTS_DT,
+    WINDOWS_DEVICE_MODELS,
+    WINDOWS_SYSTEM_VERSIONS,
+    WINDOWS_SYSTEM_WEIGHTS,
+    WINDOWS_WEIGHTS_DATA,
 )
 from tg_devices.weight.protocols import IOSProfile, IWeightProvider
 from tg_devices.weight.weights import OSProfile
@@ -80,35 +80,35 @@ class StaticWeightProvider(IWeightProvider):
 
     """
 
-    windows_apps = WIN_APPS
-    windows_systems = WIN_SYSTEMS
-    macos_apps = MAC_APPS
-    macos_systems = MAC_SYSTEMS
-    linux_apps = LINUX_APPS
-    linux_systems = LINUX_SYSTEMS
-    android_apps = ANDROID_APPS
-    android_systems = ANDROID_SYSTEMS
-    windows_app_weights = WIN_APPS_WEIGHTS
-    windows_system_weights = WIN_SYSTEMS_WEIGHTS
-    macos_app_weights = MAC_APPS_WEIGHTS
-    macos_system_weights = MAC_SYSTEMS_WEIGHTS
-    linux_app_weights = LIN_APPS_WEIGHTS
-    linux_system_weights = LIN_SYSTEMS_WEIGHTS
-    android_app_weights = ANDROID_APPS_WEIGHTS
-    android_system_weights = ANDROID_SYSTEMS_WEIGHTS
+    windows_apps = WINDOWS_APP_VERSIONS
+    windows_systems = WINDOWS_SYSTEM_VERSIONS
+    macos_apps = MACOS_APP_VERSIONS
+    macos_systems = MACOS_SYSTEM_VERSIONS
+    linux_apps = LINUX_APP_VERSIONS
+    linux_systems = LINUX_SYSTEM_VERSIONS
+    android_apps = ANDROID_APP_VERSIONS
+    android_systems = ANDROID_SYSTEM_VERSIONS
+    windows_app_weights = WINDOWS_APP_WEIGHTS
+    windows_system_weights = WINDOWS_SYSTEM_WEIGHTS
+    macos_app_weights = MACOS_APP_WEIGHTS
+    macos_system_weights = MACOS_SYSTEM_WEIGHTS
+    linux_app_weights = LINUX_APP_WEIGHTS
+    linux_system_weights = LINUX_SYSTEM_WEIGHTS
+    android_app_weights = ANDROID_APP_WEIGHTS
+    android_system_weights = ANDROID_SYSTEM_WEIGHTS
     os_names = OS_NAMES
     windows_compatibility_map = WINDOWS_COMPATIBILITY_MAP
     macos_compatibility_map = MACOS_COMPATIBILITY_MAP
     linux_compatibility_map = LINUX_COMPATIBILITY_MAP
     android_compatibility_map = ANDROID_COMPATIBILITY_MAP
-    windows_device_model = WINDOWS_DEVICE_MODEL
-    macos_device_model = MACOS_DEVICE_MODEL
-    linux_device_model = LINUX_DEVICE_MODEL
-    android_device_model = ANDROID_DEVICE_MODEL
-    windows_weights_dt = WINDOWS_WEIGHTS_DT
-    macos_weights_dt = MACOS_WEIGHTS_DT
-    linux_weights_dt = LINUX_WEIGHTS_DT
-    android_weights_dt = ANDROID_WEIGHTS_DT
+    windows_device_model = WINDOWS_DEVICE_MODELS
+    macos_device_model = MACOS_DEVICE_MODELS
+    linux_device_model = LINUX_DEVICE_MODELS
+    android_device_model = ANDROID_DEVICE_MODELS
+    windows_weights_dt = WINDOWS_WEIGHTS_DATA
+    macos_weights_dt = MACOS_WEIGHTS_DATA
+    linux_weights_dt = LINUX_WEIGHTS_DATA
+    android_weights_dt = ANDROID_WEIGHTS_DATA
 
     @staticmethod
     def _distribute_weights_lrm(
