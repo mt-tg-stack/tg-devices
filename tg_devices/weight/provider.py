@@ -191,12 +191,30 @@ class StaticWeightProvider(IWeightProvider):
         Args:
             **weight_params: Optional per-OS weight overrides. Keys can be
 
-        """  # noqa: D205
+        """
         defaults = {"windows": 30, "macos": 15, "linux": 5, "android": 50}
         weights: dict[str, int]
         if not weight_params:
             weights = dict(defaults)
         else:
+            unknown = set(weight_params) - set(defaults)
+            if unknown:
+                raise ValueError(
+                    f"Unknown weight keys: {unknown}. "
+                    f"Valid keys are: {set(defaults)}."
+                )
+            for key, value in weight_params.items():
+                if not isinstance(value, int):
+                    raise TypeError(
+                        f"Weight for {key!r} must be int, "
+                        f"got {type(value).__name__}: {value!r}."
+                    )
+                if not 0 <= value <= 100:
+                    raise ValueError(
+                        f"Weight for {key!r} must be "
+                        f"in [0, 100], got {value!r}."
+                    )
+
             weights = cast(dict[str, int], dict(weight_params))
 
         missing_keys = [k for k in defaults if k not in weights]

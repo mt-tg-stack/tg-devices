@@ -261,7 +261,7 @@ The library includes an extensive set of pre-defined data:
 Testing
 =======
 
-This project maintains a 100% success rate across 59+ comprehensive tests.
+This project maintains a 100% success rate across 152+ comprehensive tests.
 
 .. code-block:: bash
 

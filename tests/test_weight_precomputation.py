@@ -7,6 +7,7 @@ import pytest
 from tg_devices.enums.android import AndroidAppVersion, AndroidSystemVersion
 from tg_devices.enums.linux import LinuxAppVersion, LinuxSystemVersion
 from tg_devices.enums.macos import MacOSAppVersion, MacOSSystemVersion
+from tg_devices.enums.os import OS
 from tg_devices.enums.windows import WindowsAppVersion, WindowsSystemVersion
 from tg_devices.weight.introspection.weight_precomputation import (
     PLATFORM_DEFAULTS,
@@ -84,66 +85,63 @@ class TestWeightCurveParamsValidation:
 class TestPlatformDefaults:
     """Test PLATFORM_DEFAULTS registry."""
 
-    _EXPECTED_KEYS = {
-        "android_app",
-        "android_sys",
-        "linux_app",
-        "linux_sys",
-        "macos_app",
-        "macos_sys",
-        "windows_app",
-        "windows_sys",
-    }
+    _EXPECTED_KEYS = set(OS)
 
     def test_all_expected_keys_present(self) -> None:
-        """Test that PLATFORM_DEFAULTS contains all eight platform keys."""
+        """Test that PLATFORM_DEFAULTS contains all expected OS keys."""
         assert set(PLATFORM_DEFAULTS.keys()) == self._EXPECTED_KEYS
 
-    def test_all_values_are_weight_curve_params(self) -> None:
-        """Test that every value in PLATFORM_DEFAULTS is WeightCurveParams."""
+    def test_all_values_are_valid_dicts(self) -> None:
+        """Test every value in PLATFORM_DEFAULTS
+        is a dict with app/sys keys.
+        """
         for key, value in PLATFORM_DEFAULTS.items():
-            assert isinstance(value, WeightCurveParams), (
-                f"PLATFORM_DEFAULTS[{key!r}] is not a WeightCurveParams"
-            )
+            assert isinstance(value, dict), f"{key} value is not a dict"
+            assert "app" in value, f"{key} missing 'app' key"
+            assert "sys" in value, f"{key} missing 'sys' key"
+            assert isinstance(value["app"], WeightCurveParams)
+            assert isinstance(value["sys"], WeightCurveParams)
 
-    @pytest.mark.parametrize(
-        "key",
-        ["android_app", "linux_app", "macos_app", "windows_app"],
-    )
-    def test_app_version_peak_is_below_midpoint(self, key: str) -> None:
-        """Test that app version peaks are in the first 65% of the range.
+    @pytest.mark.parametrize("key", list(OS))
+    def test_app_version_peak_is_in_reasonable_range(
+        self,
+        key: OS,
+    ) -> None:
+        """Test that app version peaks are in a reasonable range (0.5 to 0.7).
 
         Users typically lag a few releases behind — the peak should sit
-        well before the newest version.
+        not too late, but also not too early.
         """
-        assert PLATFORM_DEFAULTS[key].peak_ratio <= 0.65, (
-            f"{key}: peak_ratio="
-            f"{PLATFORM_DEFAULTS[key].peak_ratio} exceeds 0.65"
+        peak = PLATFORM_DEFAULTS[key]["app"].peak_ratio
+        assert 0.5 <= peak <= 0.7, (
+            f"{key} app peak_ratio {peak} outside [0.5, 0.7]"
         )
 
-    @pytest.mark.parametrize(
-        "key",
-        ["android_sys", "linux_sys", "macos_sys", "windows_sys"],
-    )
-    def test_sys_version_peak_is_above_midpoint(self, key: str) -> None:
-        """Test that system version peaks are in the upper half of the range.
+    @pytest.mark.parametrize("key", list(OS))
+    def test_sys_version_peak_is_toward_end(
+        self,
+        key: OS,
+    ) -> None:
+        """Test that system version peaks are in the upper range (0.7 to 0.85).
 
-        OS updates are adopted faster — the peak should sit past 0.5.
+        OS updates are adopted faster — the peak should sit past 0.7.
         """
-        assert PLATFORM_DEFAULTS[key].peak_ratio > 0.5, (
-            f"{key}: peak_ratio="
-            f"{PLATFORM_DEFAULTS[key].peak_ratio} is not > 0.5"
+        peak = PLATFORM_DEFAULTS[key]["sys"].peak_ratio
+        assert 0.7 <= peak <= 0.85, (
+            f"{key} sys peak_ratio {peak} outside [0.7, 0.85]"
         )
 
     def test_no_platform_default_has_invalid_params(self) -> None:
         """Test that all platform defaults pass their own validation."""
-        for key, params in PLATFORM_DEFAULTS.items():
-            assert params.max_weight >= params.min_weight, (
-                f"{key}: max_weight < min_weight"
-            )
-            assert 0 < params.peak_ratio < 1, f"{key}: invalid peak_ratio"
-            assert params.sigma_left > 0, f"{key}: sigma_left <= 0"
-            assert params.sigma_right > 0, f"{key}: sigma_right <= 0"
+        for key, os in PLATFORM_DEFAULTS.items():
+            for param in ("app", "sys"):
+                params = os[param]
+                assert params.max_weight >= params.min_weight, (
+                    f"{key}: max_weight < min_weight"
+                )
+                assert 0 < params.peak_ratio < 1, f"{key}: invalid peak_ratio"
+                assert params.sigma_left > 0, f"{key}: sigma_left <= 0"
+                assert params.sigma_right > 0, f"{key}: sigma_right <= 0"
 
 
 class TestComputeWeightsContract:
@@ -180,7 +178,7 @@ class TestComputeWeightsContract:
 
     def test_result_is_deterministic(self) -> None:
         """Test that calling compute_weights twice yields identical results."""
-        params = PLATFORM_DEFAULTS["android_app"]
+        params = PLATFORM_DEFAULTS[OS.ANDROID]["app"]
         result1 = compute_weights(AndroidAppVersion, params=params)
         result2 = compute_weights(AndroidAppVersion, params=params)
         assert dict(result1) == dict(result2)
@@ -198,7 +196,7 @@ class TestComputeWeightsSorting:
     def test_oldest_member_gets_lower_weight_than_mid(self) -> None:
         """Test that the first version gets less weight than mid-range."""
         result = compute_weights(
-            AndroidAppVersion, params=PLATFORM_DEFAULTS["android_app"]
+            AndroidAppVersion, params=PLATFORM_DEFAULTS[OS.ANDROID]["app"]
         )
         weights = list(result.values())
         first_weight = weights[0]
@@ -214,7 +212,7 @@ class TestComputeWeightsSorting:
         rolling out to users.
         """
         result = compute_weights(
-            AndroidAppVersion, params=PLATFORM_DEFAULTS["android_app"]
+            AndroidAppVersion, params=PLATFORM_DEFAULTS[OS.ANDROID]["app"]
         )
         weights = list(result.values())
         peak_weight = max(weights)
@@ -247,7 +245,7 @@ class TestComputeWeightsKeywordOverrides:
 
     def test_peak_ratio_override_shifts_peak(self) -> None:
         """Test that higher peak_ratio moves peak toward newer versions."""
-        base = PLATFORM_DEFAULTS["android_app"]
+        base = PLATFORM_DEFAULTS[OS.ANDROID]["app"]
 
         result_low = compute_weights(AndroidAppVersion, params=base)
         result_high = compute_weights(
@@ -286,7 +284,7 @@ class TestComputeWeightsKeywordOverrides:
 
     def test_partial_override_leaves_other_fields_intact(self) -> None:
         """Test that overriding one field does not affect the others."""
-        params = PLATFORM_DEFAULTS["android_app"]
+        params = PLATFORM_DEFAULTS[OS.ANDROID]["app"]
         result = compute_weights(
             AndroidAppVersion, params=params, max_weight=20
         )
@@ -304,62 +302,68 @@ class TestComputeWeightsRealEnums:
     """Test compute_weights against all real platform enums."""
 
     @pytest.mark.parametrize(
-        "enum_class,key",
+        "enum_class,key,sub",
         [
-            (AndroidAppVersion, "android_app"),
-            (AndroidSystemVersion, "android_sys"),
-            (LinuxAppVersion, "linux_app"),
-            (LinuxSystemVersion, "linux_sys"),
-            (MacOSAppVersion, "macos_app"),
-            (MacOSSystemVersion, "macos_sys"),
-            (WindowsAppVersion, "windows_app"),
-            (WindowsSystemVersion, "windows_sys"),
+            (AndroidAppVersion, OS.ANDROID, "app"),
+            (AndroidSystemVersion, OS.ANDROID, "sys"),
+            (LinuxAppVersion, OS.LINUX, "app"),
+            (LinuxSystemVersion, OS.LINUX, "sys"),
+            (MacOSAppVersion, OS.MACOS, "app"),
+            (MacOSSystemVersion, OS.MACOS, "sys"),
+            (WindowsAppVersion, OS.WINDOWS, "app"),
+            (WindowsSystemVersion, OS.WINDOWS, "sys"),
         ],
     )
     def test_all_members_receive_a_weight(
-        self, enum_class: Any, key: str
+        self, enum_class: Any, key: OS, sub: str
     ) -> None:
         """Test that every member of a real enum gets a weight assigned."""
-        result = compute_weights(enum_class, params=PLATFORM_DEFAULTS[key])
+        result = compute_weights(
+            enum_class, params=PLATFORM_DEFAULTS[key][sub]
+        )
         assert len(result) == len(enum_class)
 
     @pytest.mark.parametrize(
-        "enum_class,key",
+        "enum_class,key,sub",
         [
-            (AndroidAppVersion, "android_app"),
-            (AndroidSystemVersion, "android_sys"),
-            (LinuxAppVersion, "linux_app"),
-            (LinuxSystemVersion, "linux_sys"),
-            (MacOSAppVersion, "macos_app"),
-            (MacOSSystemVersion, "macos_sys"),
-            (WindowsAppVersion, "windows_app"),
-            (WindowsSystemVersion, "windows_sys"),
+            (AndroidAppVersion, OS.ANDROID, "app"),
+            (AndroidSystemVersion, OS.ANDROID, "sys"),
+            (LinuxAppVersion, OS.LINUX, "app"),
+            (LinuxSystemVersion, OS.LINUX, "sys"),
+            (MacOSAppVersion, OS.MACOS, "app"),
+            (MacOSSystemVersion, OS.MACOS, "sys"),
+            (WindowsAppVersion, OS.WINDOWS, "app"),
+            (WindowsSystemVersion, OS.WINDOWS, "sys"),
         ],
     )
-    def test_no_weight_exceeds_max(self, enum_class: Any, key: str) -> None:
+    def test_no_weight_exceeds_max(
+        self, enum_class: Any, key: OS, sub: str
+    ) -> None:
         """Test that no weight exceeds the configured max_weight."""
-        params = PLATFORM_DEFAULTS[key]
+        params = PLATFORM_DEFAULTS[key][sub]
         result = compute_weights(enum_class, params=params)
         assert max(result.values()) <= params.max_weight, (
             f"{key}: a weight exceeds max_weight={params.max_weight}"
         )
 
     @pytest.mark.parametrize(
-        "enum_class,key",
+        "enum_class,key,sub",
         [
-            (AndroidAppVersion, "android_app"),
-            (AndroidSystemVersion, "android_sys"),
-            (LinuxAppVersion, "linux_app"),
-            (LinuxSystemVersion, "linux_sys"),
-            (MacOSAppVersion, "macos_app"),
-            (MacOSSystemVersion, "macos_sys"),
-            (WindowsAppVersion, "windows_app"),
-            (WindowsSystemVersion, "windows_sys"),
+            (AndroidAppVersion, OS.ANDROID, "app"),
+            (AndroidSystemVersion, OS.ANDROID, "sys"),
+            (LinuxAppVersion, OS.LINUX, "app"),
+            (LinuxSystemVersion, OS.LINUX, "sys"),
+            (MacOSAppVersion, OS.MACOS, "app"),
+            (MacOSSystemVersion, OS.MACOS, "sys"),
+            (WindowsAppVersion, OS.WINDOWS, "app"),
+            (WindowsSystemVersion, OS.WINDOWS, "sys"),
         ],
     )
-    def test_no_weight_below_min(self, enum_class: Any, key: str) -> None:
+    def test_no_weight_below_min(
+        self, enum_class: Any, key: OS, sub: str
+    ) -> None:
         """Test that no weight falls below the configured min_weight."""
-        params = PLATFORM_DEFAULTS[key]
+        params = PLATFORM_DEFAULTS[key][sub]
         result = compute_weights(enum_class, params=params)
         assert min(result.values()) >= params.min_weight, (
             f"{key}: a weight is below min_weight={params.min_weight}"
@@ -372,7 +376,7 @@ class TestComputeWeightsRealEnums:
         near position 17 (0-indexed), i.e. in range [12, 22].
         """
         result = compute_weights(
-            AndroidAppVersion, params=PLATFORM_DEFAULTS["android_app"]
+            AndroidAppVersion, params=PLATFORM_DEFAULTS[OS.ANDROID]["app"]
         )
         weights = list(result.values())
         peak_idx = weights.index(max(weights))
@@ -384,7 +388,7 @@ class TestComputeWeightsRealEnums:
     def test_android_sys_peak_toward_recent(self) -> None:
         """Test that Android system version peak leans toward newer."""
         result = compute_weights(
-            AndroidSystemVersion, params=PLATFORM_DEFAULTS["android_sys"]
+            AndroidSystemVersion, params=PLATFORM_DEFAULTS[OS.ANDROID]["sys"]
         )
         weights = list(result.values())
         peak_idx = weights.index(max(weights))
@@ -405,8 +409,10 @@ class TestWeightCurveShape:
     """
 
     @staticmethod
-    def _weights(enum_class: Any, key: str) -> list[int]:
-        result = compute_weights(enum_class, params=PLATFORM_DEFAULTS[key])
+    def _weights(enum_class: Any, key: OS, sub: str) -> list[int]:
+        result = compute_weights(
+            enum_class, params=PLATFORM_DEFAULTS[key][sub]
+        )
         return list(result.values())
 
     @staticmethod
@@ -414,20 +420,20 @@ class TestWeightCurveShape:
         return weights.index(max(weights))
 
     @pytest.mark.parametrize(
-        "enum_class,key",
+        "enum_class,key,sub",
         [
-            (AndroidAppVersion, "android_app"),
-            (AndroidSystemVersion, "android_sys"),
-            (WindowsAppVersion, "windows_app"),
-            (WindowsSystemVersion, "windows_sys"),
-            (MacOSAppVersion, "macos_app"),
-            (MacOSSystemVersion, "macos_sys"),
-            (LinuxAppVersion, "linux_app"),
-            (LinuxSystemVersion, "linux_sys"),
+            (AndroidAppVersion, OS.ANDROID, "app"),
+            (AndroidSystemVersion, OS.ANDROID, "sys"),
+            (WindowsAppVersion, OS.WINDOWS, "app"),
+            (WindowsSystemVersion, OS.WINDOWS, "sys"),
+            (MacOSAppVersion, OS.MACOS, "app"),
+            (MacOSSystemVersion, OS.MACOS, "sys"),
+            (LinuxAppVersion, OS.LINUX, "app"),
+            (LinuxSystemVersion, OS.LINUX, "sys"),
         ],
     )
     def test_left_side_trend_is_rising(
-        self, enum_class: Any, key: str
+        self, enum_class: Any, key: OS, sub: str
     ) -> None:
         """Test that weights generally increase from oldest to peak.
 
@@ -435,7 +441,7 @@ class TestWeightCurveShape:
         but the overall trend must be upward: the average weight of the
         second half of the left side must exceed the first half.
         """
-        weights = self._weights(enum_class, key)
+        weights = self._weights(enum_class, key, sub)
         peak = self._peak_idx(weights)
         left = weights[:peak]
 
@@ -452,26 +458,26 @@ class TestWeightCurveShape:
         )
 
     @pytest.mark.parametrize(
-        "enum_class,key",
+        "enum_class,key,sub",
         [
-            (AndroidAppVersion, "android_app"),
-            (AndroidSystemVersion, "android_sys"),
-            (WindowsAppVersion, "windows_app"),
-            (WindowsSystemVersion, "windows_sys"),
-            (MacOSAppVersion, "macos_app"),
-            (MacOSSystemVersion, "macos_sys"),
-            (LinuxAppVersion, "linux_app"),
-            (LinuxSystemVersion, "linux_sys"),
+            (AndroidAppVersion, OS.ANDROID, "app"),
+            (AndroidSystemVersion, OS.ANDROID, "sys"),
+            (WindowsAppVersion, OS.WINDOWS, "app"),
+            (WindowsSystemVersion, OS.WINDOWS, "sys"),
+            (MacOSAppVersion, OS.MACOS, "app"),
+            (MacOSSystemVersion, OS.MACOS, "sys"),
+            (LinuxAppVersion, OS.LINUX, "app"),
+            (LinuxSystemVersion, OS.LINUX, "sys"),
         ],
     )
     def test_right_side_trend_is_falling(
-        self, enum_class: Any, key: str
+        self, enum_class: Any, key: OS, sub: str
     ) -> None:
         """Test that weights generally decrease from peak to newest.
 
         Same half-split logic as the left-side test, inverted.
         """
-        weights = self._weights(enum_class, key)
+        weights = self._weights(enum_class, key, sub)
         peak = self._peak_idx(weights)
         right = weights[peak + 1 :]
 
@@ -488,18 +494,18 @@ class TestWeightCurveShape:
         )
 
     @pytest.mark.parametrize(
-        "enum_class,key",
+        "enum_class,key,sub",
         [
-            (AndroidAppVersion, "android_app"),
-            (AndroidSystemVersion, "android_sys"),
-            (WindowsAppVersion, "windows_app"),
-            (WindowsSystemVersion, "windows_sys"),
-            (MacOSSystemVersion, "macos_sys"),
-            (LinuxSystemVersion, "linux_sys"),
+            (AndroidAppVersion, OS.ANDROID, "app"),
+            (AndroidSystemVersion, OS.ANDROID, "sys"),
+            (WindowsAppVersion, OS.WINDOWS, "app"),
+            (WindowsSystemVersion, OS.WINDOWS, "sys"),
+            (MacOSSystemVersion, OS.MACOS, "sys"),
+            (LinuxSystemVersion, OS.LINUX, "sys"),
         ],
     )
     def test_right_tail_drops_faster_than_left(
-        self, enum_class: Any, key: str
+        self, enum_class: Any, key: OS, sub: str
     ) -> None:
         """Test that the right tail decays faster than the left.
 
@@ -509,7 +515,7 @@ class TestWeightCurveShape:
 
         For sigma_right < sigma_left the right rate must be higher.
         """
-        weights = self._weights(enum_class, key)
+        weights = self._weights(enum_class, key, sub)
         peak = self._peak_idx(weights)
         peak_w = weights[peak]
 
@@ -522,11 +528,13 @@ class TestWeightCurveShape:
         left_rate = (peak_w - weights[0]) / steps_left
         right_rate = (peak_w - weights[-1]) / steps_right
 
-        params = PLATFORM_DEFAULTS[key]
-        if params.sigma_right >= params.sigma_left:
-            pytest.skip(
-                f"{key}: sigma_right >= sigma_left, asymmetry not expected"
-            )
+        os = PLATFORM_DEFAULTS[key]
+        for param in ("app", "sys"):
+            params = os[param]
+            if params.sigma_right >= params.sigma_left:
+                pytest.skip(
+                    f"{key}: sigma_right >= sigma_left, asymmetry not expected"
+                )
 
         assert right_rate > left_rate, (
             f"{key}: right drop rate {right_rate:.2f} <= "

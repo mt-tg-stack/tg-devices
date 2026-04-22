@@ -83,7 +83,10 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
         if system_version in os_profile.compatibility_map:
             return os_profile.compatibility_map[system_version]
 
-        logger.warning("System version %s not found in compatibility map.")
+        logger.warning(
+            f"System version {system_version.value} "
+            f"not found in compatibility map."
+        )
 
         fallback_apps, fallback_weights = self._get_fallback_apps(os_profile)
         if fallback_apps:
@@ -164,15 +167,22 @@ class DeviceProfileGenerator(IDeviceProfileGenerator):
         os_profile: IOSProfile | None = None,
     ) -> DeviceProfile:
         try:
-            chosen_os = os or self._random_provider.choice(
-                population=self._weight_provider.get_os_names(),
-                weights=self._weight_provider.get_os_probabilities(),
-            )
-            os_profile = (
-                os_profile
-                if os and os_profile
-                else self._weight_provider.get_os_profile(chosen_os)
-            )
+            if os is not None:
+                os_names = self._weight_provider.get_os_names()
+                if os not in os_names:
+                    raise ValueError(
+                        f"Specified OS {os!r} is not supported. "
+                        f"Available: {os_names!r}"
+                    )
+                chosen_os = os
+            else:
+                chosen_os = self._random_provider.choice(
+                    population=self._weight_provider.get_os_names(),
+                    weights=self._weight_provider.get_os_probabilities(),
+                )
+
+            if os_profile is None:
+                os_profile = self._weight_provider.get_os_profile(chosen_os)
 
             system_version = self._random_provider.choice(
                 population=os_profile.system_version,

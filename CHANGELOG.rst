@@ -31,7 +31,6 @@ Added
   - Increased test count from 59 to **152 tests**.
   - New comprehensive tests for weight curves, peak positioning, and distribution boundaries.
   - Rigorous verification of version sorting and peer-group handling in weight calculation.
-- **Instructional Context**: Added ``GEMINI.md`` to provide better architectural context for AI-assisted development.
 
 Changed
 -------

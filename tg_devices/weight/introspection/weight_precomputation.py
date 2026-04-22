@@ -1,3 +1,7 @@
+"""
+Module for computing weights for enum members based on a Gaussian curve.
+"""
+
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -5,6 +9,7 @@ from enum import StrEnum
 from typing import Final, TypeVar
 
 from tg_devices.compatibility.inspection import parse_version
+from tg_devices.enums.os import OS
 
 E = TypeVar("E", bound=StrEnum)
 
@@ -41,31 +46,39 @@ class WeightCurveParams:
             raise ValueError("max_weight must be >= min_weight")
 
 
-PLATFORM_DEFAULTS: Final[dict[str, WeightCurveParams]] = {
-    "android_app": WeightCurveParams(
-        peak_ratio=0.55, sigma_left=0.25, sigma_right=0.22, max_weight=30
-    ),
-    "linux_app": WeightCurveParams(
-        peak_ratio=0.60, sigma_left=0.26, sigma_right=0.21, max_weight=20
-    ),
-    "macos_app": WeightCurveParams(
-        peak_ratio=0.60, sigma_left=0.26, sigma_right=0.21, max_weight=20
-    ),
-    "windows_app": WeightCurveParams(
-        peak_ratio=0.60, sigma_left=0.26, sigma_right=0.21, max_weight=20
-    ),
-    "android_sys": WeightCurveParams(
-        peak_ratio=0.78, sigma_left=0.30, sigma_right=0.16, max_weight=25
-    ),
-    "linux_sys": WeightCurveParams(
-        peak_ratio=0.72, sigma_left=0.28, sigma_right=0.18, max_weight=15
-    ),
-    "macos_sys": WeightCurveParams(
-        peak_ratio=0.72, sigma_left=0.28, sigma_right=0.18, max_weight=18
-    ),
-    "windows_sys": WeightCurveParams(
-        peak_ratio=0.72, sigma_left=0.26, sigma_right=0.18, max_weight=30
-    ),
+PLATFORM_DEFAULTS: Final[dict[OS, dict[str, WeightCurveParams]]] = {
+    OS.ANDROID: {
+        "app": WeightCurveParams(
+            peak_ratio=0.55, sigma_left=0.25, sigma_right=0.22, max_weight=30
+        ),
+        "sys": WeightCurveParams(
+            peak_ratio=0.78, sigma_left=0.30, sigma_right=0.16, max_weight=25
+        ),
+    },
+    OS.LINUX: {
+        "app": WeightCurveParams(
+            peak_ratio=0.65, sigma_left=0.28, sigma_right=0.20, max_weight=30
+        ),
+        "sys": WeightCurveParams(
+            peak_ratio=0.70, sigma_left=0.30, sigma_right=0.20, max_weight=25
+        ),
+    },
+    OS.WINDOWS: {
+        "app": WeightCurveParams(
+            peak_ratio=0.60, sigma_left=0.25, sigma_right=0.25, max_weight=30
+        ),
+        "sys": WeightCurveParams(
+            peak_ratio=0.75, sigma_left=0.30, sigma_right=0.20, max_weight=25
+        ),
+    },
+    OS.MACOS: {
+        "app": WeightCurveParams(
+            peak_ratio=0.60, sigma_left=0.25, sigma_right=0.25, max_weight=30
+        ),
+        "sys": WeightCurveParams(
+            peak_ratio=0.75, sigma_left=0.30, sigma_right=0.20, max_weight=25
+        ),
+    },
 }
 
 

@@ -12,11 +12,11 @@ Typical usage example:
     gen = DeviceProfileGenerator()
 
     # Generate a random profile
-    profile = gen.generate_os_profile()
+    profile = gen.generate_device_profile()
 
     # Generate a profile for a specific OS with custom overrides
     gen_custom = DeviceProfileGenerator(windows=40, android=60)
-    android_profile = gen_custom.generate_os_profile(os=OS.ANDROID)
+    android_profile = gen_custom.generate_device_profile(os=OS.ANDROID)
 """
 
 from tg_devices.enums.os import OS

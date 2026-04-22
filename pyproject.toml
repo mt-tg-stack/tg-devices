@@ -22,6 +22,7 @@ dynamic = ["version"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["tg_devices/"]
+
 [tool.hatch.version]
 path = "tg_devices/__meta__.py"
 
