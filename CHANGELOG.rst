@@ -7,6 +7,39 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_,
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+0.1.6 - 2026-04-22
+==================
+
+This release introduces **significant internal refactoring** of the weight precomputation system, improves **API consistency**, and dramatically expands the **test suite** to ensure long-term stability and realism of generated profiles.
+
+Added
+-----
+
+- **Enhanced Validation**: Added strict type and range validation for ``weight_params`` in ``StaticWeightProvider``.
+- **Improved Logging**: Better warning messages when system versions are not found in the compatibility map.
+- **Comprehensive Documentation**: Added detailed architectural explanations in introspection modules regarding import-time computation and data consistency.
+
+Changed
+-------
+
+- **Weight System Refactoring**:
+  - ``PLATFORM_DEFAULTS`` now uses ``OS`` enum keys instead of strings for better type safety and consistency.
+  - Fine-tuned Gaussian curve parameters (peak ratios and sigmas) for all platforms (Android, Linux, macOS, Windows) to better reflect real-world adoption patterns.
+- **API Improvement**: Renamed ``generate_os_profile`` to ``generate_device_profile`` in internal documentation and examples (aligning with v0.1.4 changes).
+- **License**: Updated copyright holder to ``mt-tg-stack - grehban``.
+
+Fixed
+-----
+
+- **OS Validation**: ``generate_device_profile`` now explicitly validates the requested OS against supported platforms.
+
+Testing
+~~~~~~~
+
+.. code-block:: text
+
+    ✅ 152 tests passed in 0.42 seconds
+
 0.1.5 - 2026-04-20
 ==================
 
